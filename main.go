@@ -69,10 +69,13 @@ func main() {
 		ptRecord.Styler(func(s *styles.Style) {
 			s.Border.Width.Set(units.Dp(4))
 			s.Border.Color.Set(colors.Scheme.Outline)
+			s.Min.X.Set(70, units.UnitPw)
+			s.Min.Y.Set(80, units.UnitPh)
 		})
 
 		for i := 0; i < len(patients); i++ {
 			core.NewButton(listFr).SetText(patients[i].Name).OnClick(func(e events.Event) {
+
 				ptRecord.SetText(patients[i].History)
 			})
 		}
