@@ -54,18 +54,36 @@ func main() {
 
 		outerFr := core.NewFrame(pg)
 		outerFr.Styler(func(s *styles.Style) {
+			s.Display = styles.Grid
+			s.Columns = 2
+		})
+		buttonFr := core.NewFrame((outerFr))
+		buttonFr.Styler(func(s *styles.Style) {
+			s.Grow.Set(1, 1)
 			s.Direction = styles.Row
-
+		})
+		core.NewButton(outerFr).SetText("Sign out").OnClick(func(e events.Event) {
+			*u = user{}
+			pg.Open("sign-in")
 		})
 
-		listFr := core.NewFrame(outerFr)
+		bodyFr := core.NewFrame(outerFr)
+		bodyFr.Styler(func(s *styles.Style) {
+			s.Direction = styles.Row
+		})
+
+		core.NewButton(buttonFr).SetText("New Patient").OnClick(func(e events.Event) {
+			pg.Open("sign-in")
+		})
+
+		listFr := core.NewFrame(bodyFr)
 		listFr.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
 			s.Border.Width.Set(units.Dp(4))
 			s.Border.Color.Set(colors.Scheme.Outline)
 		})
 
-		ptRecord := core.NewText(outerFr)
+		ptRecord := core.NewText(bodyFr)
 		ptRecord.Styler(func(s *styles.Style) {
 			s.Border.Width.Set(units.Dp(4))
 			s.Border.Color.Set(colors.Scheme.Outline)
@@ -81,10 +99,6 @@ func main() {
 			})
 		}
 
-		core.NewButton(outerFr).SetText("Sign out").OnClick(func(e events.Event) {
-			*u = user{}
-			pg.Open("sign-in")
-		})
 	})
 	b.RunMainWindow()
 }
