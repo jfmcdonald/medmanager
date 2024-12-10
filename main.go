@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"cogentcore.org/core/colors"
 	"cogentcore.org/core/core"
 	"cogentcore.org/core/events"
@@ -8,33 +10,16 @@ import (
 	"cogentcore.org/core/styles/units"
 )
 
+const mongoURI = "mongodb://localhost:27017"
+
 func main() {
+	//ctime := time.Now()
 
-	type user struct {
-		Username string
-		Password string
-	}
+	patients, _ := getPatients()
 
-	type Patient struct {
-		Name    string
-		History string
-	}
-	patients := []Patient{
-		{
-			Name:    "Bob",
-			History: "This is Bobs patient history",
-		},
-		{
-			Name:    "Jane",
-			History: "This is Jane's patient history",
-		},
-		{
-			Name:    "Joe",
-			History: "This is Joe's patient history",
-		},
-	}
 	b := core.NewBody("MedManager")
 	u := &user{}
+	p := &Patient{}
 	pg := core.NewPages(b)
 	pg.AddPage("sign-in", func(pg *core.Pages) {
 		logininfo := core.NewForm(pg).SetStruct(u)
@@ -72,10 +57,30 @@ func main() {
 			s.Direction = styles.Row
 		})
 
-		core.NewButton(buttonFr).SetText("New Patient").OnClick(func(e events.Event) {
+		core.NewButton(buttonFr).SetText("New Patient contact").OnClick(func(e events.Event) {
+			pg.Open("sign-in")
+		})
+		core.NewButton(buttonFr).SetText("New Patient vitals").OnClick(func(e events.Event) {
 			pg.Open("sign-in")
 		})
 
+		npbt := core.NewButton(buttonFr).SetText("New Patient")
+		npbt.OnClick(func(e events.Event) {
+			d := core.NewBody("New Patient")
+			core.NewForm(d).SetStruct(p)
+			d.AddBottomBar(func(bar *core.Frame) {
+				d.AddCancel(bar)
+				d.AddOK(bar).OnClick(func(e events.Event) {
+					core.MessageSnackbar(npbt, "Patient "+p.Name+" added")
+					insertPatient(p)
+				})
+			})
+			d.RunDialog(npbt)
+		})
+
+		core.NewButton(buttonFr).SetText("Trasnfer Patient").OnClick(func(e events.Event) {
+			pg.Open("sign-in")
+		})
 		listFr := core.NewFrame(bodyFr)
 		listFr.Styler(func(s *styles.Style) {
 			s.Direction = styles.Column
@@ -83,7 +88,7 @@ func main() {
 			s.Border.Color.Set(colors.Scheme.Outline)
 		})
 
-		ptRecord := core.NewText(bodyFr)
+		ptRecord := core.NewFrame(bodyFr)
 		ptRecord.Styler(func(s *styles.Style) {
 			s.Border.Width.Set(units.Dp(4))
 			s.Border.Color.Set(colors.Scheme.Outline)
@@ -91,10 +96,30 @@ func main() {
 			s.Min.Y.Set(800, units.UnitPx)
 		})
 
+		historyFrames := []*core.Frame{}
 		for i := 0; i < len(patients); i++ {
+			p = &patients[i]
 			core.NewButton(listFr).SetText(patients[i].Name).OnClick(func(e events.Event) {
 
-				ptRecord.SetText(patients[i].History)
+				for h := 0; h < len(patients[i].Histories); h++ {
+					historyFrames[h] := core.NewFrame(ptRecord)
+					historyFrames[h].Styler(func(s *styles.Style) {
+						s.Direction = styles.Column
+						s.Columns = 4
+						s.Border.Width.Set(units.Dp(4))
+						s.Border.Color.Set(colors.Scheme.Outline)
+					})
+					core.NewText(historyFrames[h]).SetText("entry date")
+					core.NewText(historyFrames[h]).SetText(patients[i].Histories[h].Date.Format(time.RFC850))
+					core.NewText(historyFrames[h]).SetText("Recorded by")
+					core.NewText(historyFrames[h]).SetText(patients[i].Histories[h].Recorder)
+					historylabel := core.NewText(historyFrames[h]).SetText("History entry")
+					historylabel.Styler(func(s *styles.Style) {
+						s.Grow.Set(1, 1)
+					})
+					core.NewText(historyFrames[h].SetText(patients[i].Histories[h].Body))
+				}
+				//ptRecord.SetText(patients[i].Histories[0].Body)
 				ptRecord.UpdateChange()
 			})
 		}
